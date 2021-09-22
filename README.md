@@ -19,7 +19,8 @@ ProxyFuzzer 是基于 mitmproxy 插件开发的 WEB Fuzzer, 通过配置HTTP/HTT
 * 交叉变异 http 请求各部分  
 * 单个参数字段依次变异  
 * 选定参数字段依次变异  
-* 通过hook自定义字典值变异的方式  
+* 通过hook强化字典值变异的方式 (可实现替换值或附加等等)    
+* 基于Http请求上下文差异变异 (待实现)  
 
 
 ![2](https://github.com/s0duku/ProxyFuzzer/blob/main/examples/1.png?raw=true)  
@@ -82,7 +83,7 @@ class PFuzzRpcMitmproxyAddon:
         else:
             proto = PFuzzConfig.PROTOCOL_HTTP
 
-        # 像Fuzz管理服务发起Fuzz请求  
+        # 向Fuzz管理服务发起Fuzz请求  
         PFuzzConn.addHttpTarget(proto,RuntimeFuzzConfig['FUZZ_TYPE'],req,RuntimeFuzzConfig['FUZZ_ARGS'])
 
 ```

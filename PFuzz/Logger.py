@@ -17,6 +17,18 @@ signal.signal(signal.SIGINT,PFuzzLogExitHandler)
 signal.signal(signal.SIGTERM,PFuzzLogExitHandler)
 
 
+class PFuzzLogReader(list):
+    def __init__(self,fname):
+        with open(fname,'rb') as fd:
+            super(PFuzzLogReader,self).__init__(pickle.load(fd))
+    
+    def getLog(self,idx):
+        return super()[idx%len(super())]
+    
+    def printLog(self,idx):
+        print(super()[idx%len(super())])
+
+
 class PFuzzLogger(threading.Thread):
     """
     PFuzzLogger, check whether exit
