@@ -3,10 +3,8 @@
 
 <img align="right" src="https://github.com/s0duku/ProxyFuzzer/blob/main/examples/0.png?raw=true" alt="AFL++ Logo">   
 
-ProxyFuzzer 是基于 mitmproxy 插件开发的 WEB Fuzzer  
-通过配置HTTP/HTTPS代理实现对目标的被动式 Fuzz 。   
+ProxyFuzzer 是基于 mitmproxy 插件开发的 WEB Fuzzer, 通过配置HTTP/HTTPS代理实现对目标的被动式 Fuzz 。   
 
---- 
 
 ## Features  
 
