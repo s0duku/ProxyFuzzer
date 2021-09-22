@@ -8,10 +8,7 @@ ProxyFuzzer 是基于 mitmproxy 插件开发的 WEB Fuzzer
 
 --- 
 
-## Features 
-
-![2](https://github.com/s0duku/ProxyFuzzer/blob/main/examples/1.png?raw=true)  
-
+## Features  
 
 支持的请求体类型:  
 * URLENCODED  
@@ -27,8 +24,9 @@ ProxyFuzzer 是基于 mitmproxy 插件开发的 WEB Fuzzer
 * 通过hook自定义字典值变异的方式  
 
 
+![2](https://github.com/s0duku/ProxyFuzzer/blob/main/examples/1.png?raw=true)  
 
-
+  
 ## Install
 
 Require:   
