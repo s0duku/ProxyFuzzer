@@ -3,9 +3,11 @@
 
 ProxyFuzzer 是基于 mitmproxy 插件开发的 WEB Fuzzer。通过配置HTTP/HTTPS代理实现对目标的被动式 Fuzz 。  
 
+<img align="right" src="https://github.com/s0duku/ProxyFuzzer/blob/main/examples/0.png?raw=true" alt="AFL++ Logo">   
+
 
 ![1](https://github.com/s0duku/ProxyFuzzer/blob/main/examples/1.png?raw=true)  
-![2](https://github.com/s0duku/ProxyFuzzer/blob/main/examples/1.png?raw=true)  
+![2](https://github.com/s0duku/ProxyFuzzer/blob/main/examples/2.png?raw=true)  
 
 
 支持的请求体类型:  
