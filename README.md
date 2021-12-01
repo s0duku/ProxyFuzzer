@@ -72,14 +72,14 @@ python3 PFuzzManager.py
 
 ### Fuzz Multipart 或其他自定义类型请求包
 
-* 使用 Burp 抓取第一次请求包
-    ![3](https://raw.githubusercontent.com/s0duku/ProxyFuzzer/main/examples/multi_fuzz_0.png)
-* 如果我们希望 Fuzz name, filename 字段，修改这两个字段的值和原来不同，这里直接置空，发出请求
-    ![3](https://raw.githubusercontent.com/s0duku/ProxyFuzzer/main/examples/multi_fuzz_1.png)
-* 数据成功变异
-    ![3](https://raw.githubusercontent.com/s0duku/ProxyFuzzer/main/examples/multi_fuzz_2.png)
-    ![3](https://raw.githubusercontent.com/s0duku/ProxyFuzzer/main/examples/multi_fuzz_3.png)
-
+* 使用 Burp 抓取第一次请求包   
+    ![3](https://raw.githubusercontent.com/s0duku/ProxyFuzzer/main/examples/multi_fuzz_0.png)  
+* 如果我们希望 Fuzz name, filename 字段，修改这两个字段的值和原来不同，这里直接置空，发出请求  
+    ![3](https://raw.githubusercontent.com/s0duku/ProxyFuzzer/main/examples/multi_fuzz_1.png)  
+* 数据成功变异  
+    ![3](https://raw.githubusercontent.com/s0duku/ProxyFuzzer/main/examples/multi_fuzz_2.png)  
+    ![3](https://raw.githubusercontent.com/s0duku/ProxyFuzzer/main/examples/multi_fuzz_3.png)  
+    
 
 ## 开发接口
 
