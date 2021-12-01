@@ -26,7 +26,7 @@ ProxyFuzzer 被动式 WEB Fuzz 引擎, 用户可自行基于不同的代理服�
 * 单个参数字段依次变异  
 * 选定参数字段依次变异  
 * 通过自定义hook强化字典值变异的方式 (可实现替换值或附加等等)    
-* 数据差异部分提取，变异
+* 基于上下文差异提取变异
 
 ### 完善数据统计信息
 * 基于Flask实现 WEB UI 展示请求覆盖信息
@@ -43,7 +43,13 @@ ProxyFuzzer 被动式 WEB Fuzz 引擎, 用户可自行基于不同的代理服�
 
 ## 架构介绍
 
-![3](https://raw.githubusercontent.com/s0duku/ProxyFuzzer/main/examples/2.jpg)
+### Fuzz 工作流程
+
+![3](https://raw.githubusercontent.com/s0duku/ProxyFuzzer/main/examples/2.jpg) 
+
+### 数据包变异策略
+
+![3](https://raw.githubusercontent.com/s0duku/ProxyFuzzer/main/examples/2.jpg)  
 
   
 ## 安装
