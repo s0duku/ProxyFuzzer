@@ -7,7 +7,7 @@ class PFuzzTemplate:
         if len(pieces) != len(gaps) + 1:
             raise
 
-    def generate(self,values:dict):
+    def generate(self,values:list):
         tmp = []
         pos = []
         nidx = len(self.gaps)
@@ -25,7 +25,7 @@ class PFuzzTemplate:
                 tmp[i] = saved
 
 
-def PFuzzBuildDifferTemplate(X,Y):
+def PFuzzBuildDifferTemplate(X,Y)->PFuzzTemplate:
     cs = PFuzzSplitStrCommon(X,Y)
     if not len(cs):
         return PFuzzTemplate([''],[])

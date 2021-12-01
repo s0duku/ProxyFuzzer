@@ -21,6 +21,7 @@ class PFuzzConfig:
     CONTENT_TYPE_TEXT = "text/html"
     CONTENT_TYPE_URLENCODED = "application/x-www-form-urlencoded"
     CONTENT_TYPE_JSON = "application/json"
+    CONTENT_TYPE_MULTIPART = 'multipart'
 
     # fuzz args key, no need to modify this
     
@@ -35,3 +36,5 @@ class PFuzzConfig:
 
     # html encode
     HTTP_ENCODE_TYPE = 'utf-8'
+
+    GLOBAL_COVERAGE = None

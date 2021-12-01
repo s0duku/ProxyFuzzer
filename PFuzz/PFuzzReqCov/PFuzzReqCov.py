@@ -6,9 +6,12 @@ import threading
 
 class PFuzzReqCov:
     def __init__(self):
+        self.pass_sig = set()
         self.cov = {}
+        self.cov_cache = {}
+        self.pass_sig_lock = threading.Lock()
         self.cov_lock = threading.Lock()
-        pass
+        self.cov_cache_lock = threading.Lock()
 
     def genReqSig(self,req)->str:
         return '{}:{}'.format(req.method,req.url)
@@ -28,6 +31,37 @@ class PFuzzReqCov:
             self.cov[host] = [sig]
         self.cov_lock.release()
 
+    def dismissSig(self,sig):
+        res = False
+        self.pass_sig_lock.acquire()
+        if sig in self.pass_sig:
+            res = True
+        else:
+            res = False
+        self.pass_sig_lock.release()
+        return res
+
+    def addDismissSig(self,sig):
+        self.pass_sig_lock.acquire()
+        self.pass_sig.add(sig)
+        self.pass_sig_lock.release()
+        
+
+    def setReqCache(self,req):
+        self.cov_cache_lock.acquire()
+        self.cov_cache[self.genCacheSig(req)] = req
+        self.cov_cache_lock.release()
+
+    def getReqCache(self,sig):
+        self.cov_cache_lock.acquire()
+        ch = self.cov_cache.get(sig)
+        self.cov_cache_lock.release()
+        return ch
+
+    def genCacheSig(self,req):
+        sig = self.genReqSig(req)
+        return '{}:{}'.format(req.headers.get('host'),sig)
+
     def getHostsCoverage(self):
         return self.cov
     
@@ -37,6 +71,8 @@ class PFuzzReqCov:
         return self.hasCovSig(req,sig)
 
     def hasCovSig(self,req,sig):
+        if self.dismissSig(sig):
+            return False
         host = req.headers.get('host')
         if not host:
             return

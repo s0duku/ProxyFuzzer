@@ -5,6 +5,7 @@
 
 import time
 import json
+from PFuzz.Config import PFuzzConfig
 from PFuzz.PFuzzManagerServer import PFuzzManagerServer
 from MyFuzzCoverage import MyFuzzCoverage
 from PFuzz.Logger import PFuzzLog
@@ -34,10 +35,10 @@ def appendHook(key,value,payload):
         return value
 
 @app.addHttpRequestFilter()
-def postFilter(req):
-    # this function used to check content-type
-    if req.headers.get('content-type') and req.headers['content-type'].startswith('application/multipart'):
-        return True
+def multiFilter(req):
+    # this function used to help deal with multipart, dissmiss the multipart request signature.
+    if req.headers.get('content-type') and PFuzzConfig.CONTENT_TYPE_MULTIPART in req.headers['content-type']:
+        cover_info.addDismissSig(cover_info.genReqSig(req))
     return False
 
 @app.addHttpRequestFilter()
@@ -47,8 +48,7 @@ def hostFilter(req):
         return True
     return False
 
-# 
-PFuzzLog.openLogFile()
+#PFuzzLog.openLogFile()
 
 if __name__ == '__main__':
 

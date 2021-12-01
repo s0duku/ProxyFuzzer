@@ -246,6 +246,7 @@ class PFuzzRequestPreFuzzSingleThreadServer(PFuzzRequestFuzzSingleThreadServer):
 
 __PFuzzHttpSingleThreadServer__ = PFuzzRequestFuzzSingleThreadServer()
 __PFuzzPreHttpSingleThreadServer__ = PFuzzRequestPreFuzzSingleThreadServer()
+__PFuzzGlobalCoverage__ = None
 
 
 class PFuzzRequestFuzzThread(threading.Thread):
@@ -311,6 +312,7 @@ class PFuzzManagerServer(SimpleXMLRPCServer):
         super(PFuzzManagerServer,self).__init__((host,port),requestHandler=PFuzzManagerRequestHandler,allow_none=True)
         self.cov_based = cov_based
         PFuzzLog.setCoverage(cov_based)
+        PFuzzConfig.GLOBAL_COVERAGE = cov_based
         self.http_mutation_hook = []
         self.req_filter = []
         self.send_wait = send_wait

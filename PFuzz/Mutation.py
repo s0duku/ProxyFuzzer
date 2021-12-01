@@ -1,5 +1,6 @@
 from .Utils import HttpDecodeQueryValue,HttpEncodeQueryValue,HttpEncodeHeaderValue,HttpMakeRequestDatagram, PFuzzFindCommonSubstr
 from PFuzz.Template import PFuzzTemplate
+from PFuzz.Template import PFuzzBuildDifferTemplate
 from .Config import PFuzzConfig
 import json
 
@@ -166,12 +167,14 @@ class ContentTypeBasedMutation(PFuzzMutation):
 
     CONTENT_TYPE_TEXT = 0
     CONTENT_TYPE_JSON = 1
+    CONTENT_TYPE_MULTIPART = 2
     
 
-    def __init__(self,req_content_type,req_body,content_fuzz_args,*kargs,**kwargs):
+    def __init__(self,req_content_type,req,content_fuzz_args,*kargs,**kwargs):
         super(ContentTypeBasedMutation,self).__init__(*kargs,**kwargs)
         self.req_content_type = req_content_type
-        self.req_body = req_body
+        self.req_body = req.data
+        self.req = req
         self.content_fuzz_args = content_fuzz_args
     
     def mutations(self, default_value=0):
@@ -179,6 +182,21 @@ class ContentTypeBasedMutation(PFuzzMutation):
             return BodyValueMutation(HttpDecodeQueryValue(self.req_body),self.content_fuzz_args,http_mutation_hook=self.http_mutation_hook).mutations(default_value)
         elif self.req_content_type == ContentTypeBasedMutation.CONTENT_TYPE_JSON:
             return JsonValueMutation(json.loads(self.req_body),self.content_fuzz_args,http_mutation_hook=self.http_mutation_hook).mutations(default_value)
+        elif self.req_content_type == ContentTypeBasedMutation.CONTENT_TYPE_MULTIPART:
+            if PFuzzConfig.GLOBAL_COVERAGE:
+                sig = PFuzzConfig.GLOBAL_COVERAGE.genCacheSig(self.req)
+                cache = PFuzzConfig.GLOBAL_COVERAGE.getReqCache(sig)
+                args = []
+                PFuzzConfig.GLOBAL_COVERAGE.setReqCache(self.req)
+                if cache:
+                    temp = PFuzzBuildDifferTemplate(cache.data,self.req.data)
+                    if isinstance(self.content_fuzz_args,dict):
+                        for _,val in self.content_fuzz_args:
+                            args.append(val)
+                    elif isinstance(self.content_fuzz_args,list):
+                        args += self.content_fuzz_args
+                    return temp.generate(args)
+        return []
 
 
 class UrlParamMutation(PFuzzMutation):
@@ -261,10 +279,12 @@ class HttpPassiveMutation(PFuzzMutation):
                     content_type = ContentTypeBasedMutation.CONTENT_TYPE_TEXT
                 elif self.http_req.headers['content-type'].startswith(PFuzzConfig.CONTENT_TYPE_URLENCODED):
                     content_type = ContentTypeBasedMutation.CONTENT_TYPE_TEXT
+                elif PFuzzConfig.CONTENT_TYPE_MULTIPART in self.http_req.headers['content-type']:
+                    content_type = ContentTypeBasedMutation.CONTENT_TYPE_MULTIPART
                 else:
                     return
                 
-                for body in ContentTypeBasedMutation(content_type,self.http_req.data,
+                for body in ContentTypeBasedMutation(content_type,self.http_req,
                             self.http_fuzz_args[PFuzzConfig.BODY_FUZZ_ARGS],http_mutation_hook=self.http_mutation_hook).mutations():
                     yield HttpMakeRequestDatagram(self.http_req.method,self.http_req.url,
                             query,header,body) 
@@ -309,6 +329,8 @@ class HttpPassiveMutation(PFuzzMutation):
                 content_type = ContentTypeBasedMutation.CONTENT_TYPE_TEXT
             elif self.http_req.headers['content-type'].startswith(PFuzzConfig.CONTENT_TYPE_URLENCODED):
                 content_type = ContentTypeBasedMutation.CONTENT_TYPE_TEXT
+            elif PFuzzConfig.CONTENT_TYPE_MULTIPART in self.http_req.headers['content-type']:
+                    content_type = ContentTypeBasedMutation.CONTENT_TYPE_MULTIPART
             else:
                 yield HttpMakeRequestDatagram(self.http_req.method,self.http_req.url,
                             query,HttpEncodeHeaderValue(self.http_req.headers),self.http_req.data)
@@ -317,7 +339,7 @@ class HttpPassiveMutation(PFuzzMutation):
 
             saved_length = self.http_req.headers.get('content-length')
             
-            for body in ContentTypeBasedMutation(content_type,self.http_req.data,
+            for body in ContentTypeBasedMutation(content_type,self.http_req,
                             self.http_fuzz_args[PFuzzConfig.BODY_FUZZ_ARGS],http_mutation_hook=self.http_mutation_hook).mutations():
                 self.http_req.headers['content-length'] = str(len(body))
                 header = HttpEncodeHeaderValue(self.http_req.headers)
