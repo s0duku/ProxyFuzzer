@@ -43,7 +43,7 @@ def postFilter(req):
 @app.addHttpRequestFilter()
 def hostFilter(req):
     # this function used to check host
-    if req.headers.get('host') and (not req.headers['host'].startswith('127.0.0.1') ):
+    if req.headers.get('host') and (not req.headers['host'].startswith('127.0.0.1')):
         return True
     return False
 

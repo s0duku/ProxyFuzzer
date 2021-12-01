@@ -43,6 +43,7 @@ ProxyFuzzer 被动式 WEB Fuzz 引擎, 用户可自行基于不同的代理服�
 
 ## 架构介绍
 
+![3](https://github.com/s0duku/ProxyFuzzer/blob/main/examples/2.png?raw=true)
   
 ## 安装
 

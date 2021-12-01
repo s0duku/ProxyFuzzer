@@ -86,6 +86,9 @@ class PFuzzLogger(threading.Thread):
         self.msg_queue_lock.release()
 
     def Info(self,msg:str):
+        if not self.is_alive():
+            print("\033[31m[Log Thread ERROR] Log Thread Exit\n\033[31m\033[0m")
+            PFuzzLog.Exit(-1)
         self.acquireLock()
         self.msg_queue.append(msg)
         self.releaseLock()

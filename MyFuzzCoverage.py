@@ -3,4 +3,3 @@ import json
 
 class MyFuzzCoverage(PFuzzReqCov):
     pass
-    

@@ -8,6 +8,8 @@ from .Mutation import HttpPassiveMutation
 from .Utils import HttpDatagramToRequest,HttpMakeResponseDatagram,HttpEncodeHeaderValue
 from xmlrpc.server import SimpleXMLRPCServer,SimpleXMLRPCRequestHandler
 import requests
+from urllib import error
+import socket
 
 # disable the request warning
 requests.packages.urllib3.disable_warnings()
@@ -45,6 +47,9 @@ class PFuzzRequestFuzzSingleThreadServer(threading.Thread):
         self.mutations_queue = mq
 
     def getMutations(self):
+        if not self.is_alive():
+            print("\033[31m[Fuzz Thread ERROR] Fuzz Thread Exit\n\033[31m\033[0m")
+            PFuzzLog.Exit(-1)
         mutations = None
         self.acquireLock()
         if len(self.mutations_queue) > 0:
@@ -54,6 +59,9 @@ class PFuzzRequestFuzzSingleThreadServer(threading.Thread):
         return mutations
 
     def addMutations(self,proto,mutations,send_wait=PFuzzNoWaitSend):
+        if not self.is_alive():
+            print("\033[31m[Fuzz Thread ERROR] Fuzz Thread Exit\n\033[31m\033[0m")
+            PFuzzLog.Exit(-1)
         self.acquireLock()
         self.mutations_queue.append((proto,mutations,send_wait))
         self.releaseLock()
@@ -65,37 +73,44 @@ class PFuzzRequestFuzzSingleThreadServer(threading.Thread):
             if mts == None:
                 continue
             info = "\n\033[35m[Mutations Http]\033[32m\n{}\n{}\n\n\033[34m{}\n\033[35m[Mutations End]\033[0m\n"
+            #PFuzzLog.Info('Fuzzing ................')
             for data in mts[1]:
                 
                 if PFuzzLog.isExit():
-                    return
-
+                    break
                 try:
                     req = HttpDatagramToRequest(data)
                 except:
                     resp_log = "\n\033[35m[Mutations Http]\n\033[31mRequest Parse Error!\n\033[35m[Mutations End]\033[0m\n"
-                    print(resp_log)
                     PFuzzLog.Info(resp_log)
                     PFuzzLog.Exit()
 
                 req.url = "{}://{}{}".format(mts[0],req.headers.get('host'),req.url)
-                try:
-                    mts[2]()
-                    now_time = '[{}]'.format(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
+                
+                mts[2]()
+                now_time = '[{}]'.format(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
                 #except:
                     #pass
                 
                 #if True:
+                    #PFuzzLog.Info('Send Request ................')
+                try:
                     resp = requests.request(method=req.method,url=req.url,
-                                    params=req.params,headers=req.headers,data=req.data,verify=False)
-                    resp_log = HttpMakeResponseDatagram(status=resp.status_code,header=HttpEncodeHeaderValue(resp.headers),body=resp.text)
-                    PFuzzLog.Info(info.format(now_time,data,resp_log[:]))
-                #try:
-                    #pass
+                                    params=req.params,headers=req.headers,data=req.data,verify=False,timeout=2)
+                except requests.exceptions.Timeout as e:
+                    now_time = '[{}]'.format(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
+                    resp_log = "\n\033[35m[Mutations Http]\n\033[33m{}\nRequest HTTP TimeOut!\n\033[35m[Mutations End]\033[0m\n".format(now_time)
+                    PFuzzLog.Info(resp_log)
+                    continue
                 except:
                     now_time = '[{}]'.format(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
                     resp_log = "\n\033[35m[Mutations Http]\n\033[31m{}\nRequest HTTP Error!\n\033[35m[Mutations End]\033[0m\n".format(now_time)
                     PFuzzLog.Info(resp_log)
+                    continue
+                
+                #PFuzzLog.Info('Recv Response ................')
+                resp_log = HttpMakeResponseDatagram(status=resp.status_code,header=HttpEncodeHeaderValue(resp.headers),body=resp.text)
+                PFuzzLog.Info(info.format(now_time,data,resp_log[:1000]))
 
 
 class PFuzzRequestPreFuzzSingleThreadServer(PFuzzRequestFuzzSingleThreadServer):
@@ -140,6 +155,9 @@ class PFuzzRequestPreFuzzSingleThreadServer(PFuzzRequestFuzzSingleThreadServer):
 
 
     def getFuzzReq(self):
+        if not self.is_alive():
+            print("\033[31m[Pre Fuzz Thread ERROR] Fuzz Thread Exit\n\033[31m\033[0m")
+            PFuzzLog.Exit(-1)
         mutations = None
         self.acquireLock()
         if len(self.mutations_queue) > 0:
@@ -149,9 +167,14 @@ class PFuzzRequestPreFuzzSingleThreadServer(PFuzzRequestFuzzSingleThreadServer):
         return mutations
 
     def addFuzzReq(self,proto,fuzz_type,req,fuzz_args,send_wait=PFuzzNoWaitSend):
+        if not self.is_alive():
+            print("\033[31m[Pre Fuzz Thread ERROR] Fuzz Thread Exit\n\033[31m\033[0m")
+            PFuzzLog.Exit(-1)
+        
         self.acquireLock()
         self.mutations_queue.append((proto,fuzz_type,req,fuzz_args,send_wait))
         self.releaseLock()
+        
 
 
 
