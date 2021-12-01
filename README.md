@@ -49,7 +49,7 @@ ProxyFuzzer 被动式 WEB Fuzz 引擎, 用户可自行基于不同的代理服�
 
 ### 数据包变异策略
 
-![3](https://raw.githubusercontent.com/s0duku/ProxyFuzzer/main/examples/2.jpg)  
+![3](https://raw.githubusercontent.com/s0duku/ProxyFuzzer/main/examples/3.jpg)  
 
   
 ## 安装
