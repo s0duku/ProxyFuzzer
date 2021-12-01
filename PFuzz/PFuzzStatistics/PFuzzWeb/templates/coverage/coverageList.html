@@ -1,0 +1,15 @@
+<div class="container">
+    <ul class="list-group">
+        {% for host,covers in coverage.items() %}
+        <li>
+            <h3 onclick="displayOrHiddenList(document.getElementById('{{ host+'CoverList' }}'))">{{ host }}</h3>
+            <ul class="list-group" id="{{ host+'CoverList' }}" style="display:none">
+                {% for value in covers %}
+                    <li class="list-group-item list-group-item-warning"> {{ value }} </li>
+                {% endfor %} 
+            </ul>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+</div>

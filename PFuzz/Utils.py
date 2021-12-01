@@ -3,6 +3,74 @@ from .Config import PFuzzConfig
 import requests
 
 
+def PFuzzBuildMatrix(row,line):
+    return [[0 for k in range(line)] for l in range(row)]
+
+def PFuzzFindCommonSubstr(X,Y):
+    m = len(X)
+    n = len(Y)
+    
+    LCSuff = PFuzzBuildMatrix(m+1,n+1)
+ 
+    result = 0
+    sublen = 0
+ 
+    for i in range(m + 1):
+        for j in range(n + 1):
+            if (i == 0 or j == 0):
+                LCSuff[i][j] = 0
+            elif (X[i-1] == Y[j-1]):
+                LCSuff[i][j] = LCSuff[i-1][j-1] + 1
+                if LCSuff[i][j] > result:
+                    result = LCSuff[i][j]
+                    sublen = i
+            else:
+                LCSuff[i][j] = 0
+    return X[:sublen][-result:]
+
+def PFuzzSplitStrCommon(X,Y):
+    if not X or not Y:
+        return []
+    splitF = []
+    splitB = []
+
+    comStr = PFuzzFindCommonSubstr(X,Y)
+
+    if comStr:
+        Xf = X[:X.index(comStr)]
+        Xb = X[X.index(comStr)+len(comStr):]
+        Yf = Y[:Y.index(comStr)]
+        Yb = Y[Y.index(comStr)+len(comStr):]
+
+        splitF += PFuzzSplitStrCommon(Xf,Yf)
+        splitB += PFuzzSplitStrCommon(Xb,Yb)
+
+        return splitF + [comStr] + splitB
+    
+    return []
+
+
+def PFuzzMitmReqToRequest(req):
+    # build Request from mitmproxy request
+    try:
+        # our request url will not contain query string
+        url = req.path[:req.path.index('?')]
+    except:
+        url = req.path
+    
+    
+    method = req.method
+    params = dict()
+    for key,value in req.query.items():
+        params[key] = value
+    data = req.content.decode(PFuzzConfig.HTTP_ENCODE_TYPE)
+    headers = dict()
+    for key,value in req.headers.items():
+        headers[key.lower()] = value
+    
+    return requests.Request(method=method,url=url,params=params,headers=headers,data=data)
+
+
 def HttpDecodeQueryValue(data:str):
     # decode query string into dict
     value = {}

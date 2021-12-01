@@ -1,0 +1,1 @@
+touch /tmp/s0duku-$(date "+%Y-%m-%d-%H-%M-%S")

@@ -1,4 +1,5 @@
-from .Utils import HttpDecodeQueryValue,HttpEncodeQueryValue,HttpEncodeHeaderValue,HttpMakeRequestDatagram
+from .Utils import HttpDecodeQueryValue,HttpEncodeQueryValue,HttpEncodeHeaderValue,HttpMakeRequestDatagram, PFuzzFindCommonSubstr
+from PFuzz.Template import PFuzzTemplate
 from .Config import PFuzzConfig
 import json
 
@@ -7,19 +8,21 @@ def ReplaceMutationHook(key,value,mvalue):
 
 
 def QueryValueDfsMutation(fuzz_args,data:dict,mutation_hook:list):
-    if not fuzz_args or not data:
-        yield HttpEncodeQueryValue(data)
-        return
+
+    mut_cnt = 0
 
     if isinstance(fuzz_args,list):
+        # for fuzz args is list 
         for key,value in data.items():
             saved = value
             for payload in fuzz_args:
                 for hook in mutation_hook:
-                    data[key] = hook(key,data[key],payload)
+                    data[key] = hook(key,saved,payload)
+                    mut_cnt += 1
                     yield HttpEncodeQueryValue(data)
             data[key] = saved
     elif isinstance(fuzz_args,dict):
+        # for fuzz args is dict
         for key,value in fuzz_args.items():
             if data.get(key) == None:
                 continue
@@ -28,49 +31,78 @@ def QueryValueDfsMutation(fuzz_args,data:dict,mutation_hook:list):
 
             if not data:
                 data[key] = saved
+                mut_cnt += 1
                 yield HttpEncodeQueryValue(data)
                 continue
             for payload in value:
                 for hook in mutation_hook:
-                    data[key] = hook(key,data[key],payload)
+                    data[key] = hook(key,saved,payload)
+                    mut_cnt += 1
                     yield HttpEncodeQueryValue(data)
             data[key] = saved
-
+    
+    # at least will generate a normal data
+    if mut_cnt == 0:
+        yield HttpEncodeQueryValue(data)
 
 def JsonValueDfsMutation(json_fuzz_arg,root_node,par_node,key:str,cur_node,mutation_hook):
+    mut_cnt = 0
+    for value in JsonValueDfsMutation_(json_fuzz_arg,root_node,par_node,key,cur_node,mutation_hook):
+        mut_cnt += 1
+        yield value
+    
+    # at least will generate a normal data
+    if mut_cnt == 0:
+        yield json.dumps(root_node)
+
+    
+
+
+def JsonValueDfsMutation_(json_fuzz_arg,root_node,par_node,key:str,cur_node,mutation_hook,cur_saved=''):
+    # deal with json mutation recursively
+    # root_node: the orgin json value
+    # par_node: keep the parent_node for use
+    # key: key of current node
+    # cur_node: current node we are going to mutate
+    # mutation_hook: for mutation behaviour
     if not json_fuzz_arg:
+        # nothing need to mutated, we just generate the origin value
         yield json.dumps(root_node)
         return
     if isinstance(cur_node,list):
+        # if current node is a list object
         for next_node in cur_node:
-            obj = JsonValueDfsMutation(json_fuzz_arg,root_node,par_node,key,next_node,mutation_hook)
+            obj = JsonValueDfsMutation_(json_fuzz_arg,root_node,par_node,key,next_node,mutation_hook,cur_saved)
             for res in obj:
                 yield res
     elif isinstance(cur_node,dict):
+        # if current node is a dict object
         for next_key,next_node in cur_node.items():
+            # save now node
             saved = cur_node[next_key]
-            obj = JsonValueDfsMutation(json_fuzz_arg,root_node,cur_node,next_key,next_node,mutation_hook)
+            obj = JsonValueDfsMutation_(json_fuzz_arg,root_node,cur_node,next_key,next_node,mutation_hook,saved)
             for res in obj:
                 yield res
             cur_node[next_key] = saved
     else:
+       # current node neither is a dict, or a list
         if root_node == par_node:
+             # if a simple value
             for payload in json_fuzz_arg:
                 for hook in mutation_hook:
-                    par_node[key] = hook(key,par_node[key],payload)
+                    par_node[key] = hook(key,cur_saved,payload)
                     yield json.dumps(root_node) 
         if isinstance(json_fuzz_arg,list):
+            # if fuzz arg is a list
             for payload in json_fuzz_arg:
                 for hook in mutation_hook:
-                    par_node[key] = hook(key,par_node[key],payload)
+                    par_node[key] = hook(key,cur_saved,payload)
                     yield json.dumps(root_node)
         elif isinstance(json_fuzz_arg,dict) and (json_fuzz_arg.get(key) != None):
-            if not json_fuzz_arg.get(key):
-                yield json.dumps(root_node)
-                return
+            # if fuzz arg is a dict , and current code's key is existed in fuzz arg
             for payload in json_fuzz_arg.get(key):
                 for hook in mutation_hook:
-                    par_node[key] = hook(key,par_node[key],payload)
+                    par_node[key] = hook(key,cur_saved,payload)
                     yield json.dumps(root_node)
 
 
@@ -101,7 +133,9 @@ class JsonValueMutation(PFuzzMutation):
         self.json_fuzz_arg = json_fuzz_arg
 
     def mutations(self, default_value=0):
-        return JsonValueDfsMutation(self.json_fuzz_arg,self.root_node,self.root_node,None,self.root_node,self.http_mutation_hook)
+        for value in JsonValueDfsMutation(self.json_fuzz_arg,self.root_node,self.root_node,None,self.root_node,self.http_mutation_hook):
+            yield value
+        
 
 
 class BodyValueMutation(PFuzzMutation):
@@ -113,6 +147,17 @@ class BodyValueMutation(PFuzzMutation):
 
     def mutations(self, default_value=0):
         return QueryValueDfsMutation(self.body_fuzz_args,self.body_value,self.http_mutation_hook)
+
+
+class MultipartMutation(PFuzzMutation):
+
+    def __init__(self,multipart_template,multipart_fuzz_args,*kargs,**kwargs):
+        super(MultipartMutation,self).__init__(*kargs,**kwargs)
+        self.multipart_value = multipart_template
+        self.multipart_fuzz_args = multipart_fuzz_args
+
+    def mutations(self, default_value=0):
+        return 
 
 
 
@@ -183,10 +228,6 @@ class HeaderValueMutation(PFuzzMutation):
                 self.header_template[key] = saved
 
 class HttpPassiveMutation(PFuzzMutation):
-
-    HTTP_FUZZ_BODY = 1
-    HTTP_FUZZ_QUERY = 2
-    HTTP_FUZZ_HEADER = 4
 
     def __init__(self,http_fuzz_type,http_req,http_fuzz_args:dict,*kargs,**kwargs):
         super(HttpPassiveMutation,self).__init__(*kargs,**kwargs)

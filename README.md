@@ -3,30 +3,48 @@
 
 <img align="right" src="https://github.com/s0duku/ProxyFuzzer/blob/main/examples/0.png?raw=true" alt="AFL++ Logo">   
 
-ProxyFuzzer 是基于 mitmproxy 插件开发的 WEB Fuzzer, 通过配置HTTP/HTTPS代理实现对目标的被动式 Fuzz 。   
+ProxyFuzzer 被动式 WEB Fuzz 引擎, 用户可自行基于不同的代理服务器实现 Fuzz 前端，使用引擎提供的接口将请求包转发给 Fuzz 引擎即可对目标进行被动式 Fuzz 测试。
 
+## 目前提供的代理插件实现
+* mitmproxy
 
-## Features  
+## 更新开发进度  
 
-支持的请求体类型:  
+### 支持的请求体类型  
 * URLENCODED  
 * JSON  
 
-支持的变异策略:   
+### 基于签名的请求包覆盖检测
+* 默认签名方式，三元组 (host,method,url)
+* 支持自定签名，针对特定目标扩展
+
+### 支持的变异策略   
 * url查询字符串变异  
 * http header 变异  
 * http body 变异  
 * 交叉变异 http 请求各部分  
 * 单个参数字段依次变异  
 * 选定参数字段依次变异  
-* 通过hook强化字典值变异的方式 (可实现替换值或附加等等)    
-* 基于Http请求上下文差异变异 (待实现)  
+* 通过自定义hook强化字典值变异的方式 (可实现替换值或附加等等)    
+* 数据差异部分提取，变异
+
+### 完善数据统计信息
+* 基于Flask实现 WEB UI 展示请求覆盖信息
+* 展示每个host下覆盖到的请求包签名
+* 修复日志存储到文件，多线程下不完整的Bug
+
+### 架构
+* 优化代理端到Fuzz段的请求处理
+* 添加Fuzz预处理中间层线程
 
 
 ![2](https://github.com/s0duku/ProxyFuzzer/blob/main/examples/1.png?raw=true)  
 
+
+## 架构介绍
+
   
-## Install
+## 安装
 
 Require:   
 * Python3  
@@ -37,7 +55,7 @@ pip install mitmproxy
 
 ```  
 
-## Usage
+## 使用
 
 ```
 cd ProxyFuzzer
@@ -48,7 +66,7 @@ python3 PFuzzManager.py
 
 ``` 
 
-## API
+## 开发接口
 
 ### PFuzzRpcMitmAddon.py
 
