@@ -41,9 +41,11 @@ def multiFilter(req):
         cover_info.addDismissSig(cover_info.genReqSig(req))
     return False
 
+# return True to drop the packet
 @app.addHttpRequestFilter()
 def hostFilter(req):
-    # this function used to check host
+    # this function used to check host, when packet host not start with 127.0.0.1, drop it
+    # it means only fuzz target with host: 127.0.0.1
     if req.headers.get('host') and (not req.headers['host'].startswith('127.0.0.1')):
         return True
     return False
